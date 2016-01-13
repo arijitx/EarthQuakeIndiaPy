@@ -1,0 +1,91 @@
+#Author : Zed41
+#Date 	: 13.1.16
+#Data is extracted from http://www.imd.gov.in
+#Data may not be realtime 
+#ASCII art from http://patorjk.com/software/taag/#p=testall&f=Graffiti&t=Earth%0AQuakePy%0A
+
+from mechanize import Browser
+from bs4 import BeautifulSoup as BS
+import json
+
+
+br = Browser()
+br.set_handle_robots(False)
+br.set_handle_referer(False)
+br.set_handle_refresh(False)
+br.addheaders = [('User-agent', 'Firefox'),('Connection','keep-alive'),('Keep-Alive', '115')]
+
+def getLastKnownQuake():
+	br.open('http://www.imd.gov.in/section/seismo/dynamic/PRLMNEW1.HTM')
+	soup = BS(br.response().read(),"lxml")
+	flag=0
+	earthquake={}
+	table = soup.find('table')
+	for row in table.findAll('tr'):
+	    col = row.findAll('td')
+	    if "Date of Occurence" in col[0].getText() or flag==1:
+	    	flag=1
+	    	earthquake[col[0].getText()]=col[1].getText()
+	return earthquake
+
+def getCurrentMonthData():
+	br.open('http://www.imd.gov.in/section/seismo/dynamic/CMONTH.HTM')
+	soup = BS(br.response().read(),"lxml")
+	flag=0
+	earthquakes=[]
+	earthquake={}
+	tables = soup.find_all('table')
+	for row in tables[1].findAll('tr'):
+	    col = row.findAll('td')
+	    if flag==1 :
+	    	if len(col)<7:
+	    		break
+	    	
+	    	earthquake={}
+	    	earthquake["Date"]=col[0].getText()
+	    	earthquake["Time"]=col[1].getText()+" UTC"
+	    	earthquake["Lat"]=col[2].getText()
+	    	earthquake["Long"]=col[3].getText()
+	    	earthquake["Depth"]=col[4].getText()+ " KM"
+	    	earthquake["Magnitude"]=col[5].getText()
+	    	earthquake["Region"]=col[6].getText()
+	    	earthquakes.append(earthquake)
+	    if "Date" in col[0].getText() :
+	    	flag=1
+	return earthquakes   	
+	
+
+def getLastMonthData():
+	br.open('http://www.imd.gov.in/section/seismo/dynamic/LMONTH.HTM')
+	soup = BS(br.response().read(),"lxml")
+	flag=0
+	earthquakes=[]
+	earthquake={}
+	tables = soup.find_all('table')
+	for row in tables[1].findAll('tr'):
+	    col = row.findAll('td')
+	    if flag==1 :
+	    	if len(col)<7:
+	    		break
+	    	earthquake={}
+	    	earthquake["Date"]=col[0].getText()
+	    	earthquake["Time"]=col[1].getText()+" UTC"
+	    	earthquake["Lat"]=col[2].getText()
+	    	earthquake["Long"]=col[3].getText()
+	    	earthquake["Depth"]=col[4].getText()+ " KM"
+	    	earthquake["Magnitude"]=col[5].getText()
+	    	earthquake["Region"]=col[6].getText()
+	    	earthquakes.append(earthquake)
+	    if "Date" in col[0].getText() :
+	    	flag=1
+	    	
+	return earthquakes
+		
+def usage():
+	f=open('art.txt','r')
+	print f.read()
+	f.close()
+	print
+	print 'getLastKnownQuake() returns earthquake dict object'
+	print 'getLastMonthData() returns a list of earthquake dict objects'
+	print 'getCurrentMonthData() returns a list of earthquake dict objects'
